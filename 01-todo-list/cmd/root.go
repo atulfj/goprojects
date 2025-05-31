@@ -5,19 +5,21 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-var rootCmd = getRootCmd()
+var rootCmd = &cobra.Command{
+	Use:   "tasks",
+	Short: "tasks is a simple CLI to-do list manager",
+	Long: `A simple CLI todo list manager written in Go.
+Supports adding, listing, completing and deleting a task.
+Simple use the provided CLI commands and start being productive!`,
 
-func getRootCmd() *cobra.Command {
-
-	Use := "tasks <cmd1> <cmd2> <...args>"
-	Short := "root command to add / delete / complete tasks"
-	Long := "find full specification in README (insert link)"
-
-	RunE := func
-
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			cmd.Help()
+			os.Exit(1)
+		}
+	},
 }
 
 func Execute() {
