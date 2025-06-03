@@ -4,7 +4,6 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"bufio"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -56,19 +55,11 @@ func addTask(task string) error {
 
 	defer freeidsFile.Close()
 
-	// BUG: read a free ID and DELETE it from the file
-	scanner := bufio.NewScanner(freeidsFile)
-	var taskID string
-	for scanner.Scan() {
-		taskID = scanner.Text()
-		if taskID != "" {
-			break
-		}
-	}
+	// read a free ID and DELETE it from the file
+	taskID := getAndRemoveFreeID("free-ids.txt")
 
 	if taskID == "" { // means we do not have a free ID
 		// read ID from the id-counter file and update the counter
-		fmt.Println("here in counter")
 		taskID = readAndUpdateCounter("id-counter.txt")
 	}
 
@@ -86,6 +77,44 @@ func addTask(task string) error {
 	fmt.Printf("created on %v\n", taskTimestamp.Format(time.UnixDate))
 
 	return nil
+}
+
+func getAndRemoveFreeID(filename string) string {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	lines := strings.Split(string(data), "\n")
+
+	var (
+		id       string
+		newLines []string
+		found    bool
+	)
+
+	found = false
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if !found && line != "" {
+			id = line
+			found = true
+			continue
+		}
+		if line != "" {
+			newLines = append(newLines, line)
+		}
+	}
+
+	err = os.WriteFile(filename, []byte(strings.Join(newLines, "\n")), 0644)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	return id
 }
 
 func readAndUpdateCounter(filename string) string {

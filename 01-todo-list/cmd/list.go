@@ -8,8 +8,15 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"text/tabwriter"
+	"time"
 
+	"github.com/mergestat/timediff"
 	"github.com/spf13/cobra"
+)
+
+const (
+	timeLayout = "2006-01-02 15:04:05.999999999 -0700 MST m=+0.000000000"
 )
 
 // listCmd represents the list command
@@ -58,7 +65,37 @@ func listTasks(all bool) {
 		}
 	}
 
-	fmt.Println(list)
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 4, 4, 1, ' ', 0)
+	defer w.Flush()
+
+	if all {
+		fmt.Fprintln(w, "ID\tTASK\tCREATED\tDONE")
+	} else {
+		fmt.Fprintln(w, "ID\tTASK\tCREATED")
+	}
+
+	for _, v := range list {
+		if all {
+			fmt.Fprintf(w, "%s\t%s\t%v\t%s\n", v[0], v[1], humanize(v[2]), v[3])
+		} else {
+			fmt.Fprintf(w, "%s\t%s\t%v\n", v[0], v[1], humanize(v[2]))
+		}
+	}
+
+	fmt.Fprintln(w)
+
+}
+
+func humanize(t string) string {
+	tm, err := time.Parse(timeLayout, t)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	return timediff.TimeDiff(tm)
+
 }
 
 func init() {
